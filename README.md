@@ -20,6 +20,7 @@ timestamps attached.
 ```
 $ ./main https://github.com/mikedesu/markdownurl-cpp
 - *16:46* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++](https://github.com/mikedesu/markdownurl-cpp)
+$ ./main https://github.com/mikedesu/markdownurl-cpp "custom title"
 - *16:46* [custom title](https://github.com/mikedesu/markdownurl-cpp)
 ```
 

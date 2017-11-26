@@ -5,6 +5,11 @@ An advanced version of markdownurl written in C++.
 Markdownurl is a simple tool for generating hyperlinks as list-items with
 timestamps attached.
 
+### Requirements
+
+- libxml2
+- libcurl
+
 ### Building
 
 `$ make`
@@ -22,8 +27,11 @@ $ ./main https://github.com/mikedesu/markdownurl-cpp
 - *16:46* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++](https://github.com/mikedesu/markdownurl-cpp)
 $ ./main https://github.com/mikedesu/markdownurl-cpp "custom title"
 - *16:46* [custom title](https://github.com/mikedesu/markdownurl-cpp)
+$ ./main https://github.com/mikedesu/markdownurl-cpp "^1 | custom title"
+- *13:20* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++| custom title](https://github.com/mikedesu/markdownurl-cpp)
 ```
 
 - *16:46* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++](https://github.com/mikedesu/markdownurl-cpp)
 - *16:46* [custom title](https://github.com/mikedesu/markdownurl-cpp)
+- *13:20* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++| custom title](https://github.com/mikedesu/markdownurl-cpp)
 

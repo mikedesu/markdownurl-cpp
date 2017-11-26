@@ -22,7 +22,6 @@ void stripUnicode(std::string &str) ;
 //  libxml callback context structure
 struct Context {
     Context(): addTitle(false) { }
-
     bool addTitle;
     std::string title;
 };
@@ -84,7 +83,19 @@ static htmlSAXHandler saxHandler = {
 };
 
 //  Parse given (assumed to be) HTML text and return the title
-static void parseHtml(const std::string &html, std::string &title) ;
+static void parseHtml(const std::string &html, std::string &title);
+
+// Parse title given on command line and handle special characters
+// Currently using ^1 to mean "main page title"
+std::string handleTitle(std::string cmdLineTitle, std::string title) {
+    size_t beginPos = title.find( "^1" );
+    if ( beginPos != std::string::npos ) {
+        size_t endPos = beginPos + 3;
+        title.replace( beginPos, endPos, cmdLineTitle );
+    }
+    return title;
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -124,7 +135,10 @@ int main(int argc, char *argv[]) {
         parseHtml(buffer, title);
     }
     else {
-        title = std::string(argv[2]);
+        std::string title0;
+        parseHtml(buffer, title0);
+
+        title = handleTitle(title0, std::string(argv[2]));
     }
 
     // Strip the unicode from the title

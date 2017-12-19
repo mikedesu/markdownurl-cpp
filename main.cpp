@@ -103,6 +103,9 @@ string handleTitle(string cmdLineTitle, string title) {
     return title;
 }
 
+
+#define DBG_PRINT(str) if (verboseOn) { printf("%s\n",str); } 
+
 int main(int argc, char *argv[]) {
     CURL *conn = NULL;
     CURLcode code;
@@ -116,8 +119,9 @@ int main(int argc, char *argv[]) {
     bool timeOn = false;
     bool printHelp = false;
     bool verboseOn = false;
+    bool listItemOn = false;
 
-    while ((c = getopt(argc, argv, "thi:c:")) != -1) {
+    while ((c = getopt(argc, argv, "thvli:c:")) != -1) {
         switch (c) {
             case -1:
             case 0:
@@ -142,6 +146,10 @@ int main(int argc, char *argv[]) {
             case 'v':
             verboseOn = true;
             break;
+
+            case 'l':
+            listItemOn = true;
+            break;
         }
     }
     
@@ -150,7 +158,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_SUCCESS);
     }
 
-    if (verboseOn) {printf("curl_global_init\n");}
+    DBG_PRINT("curl_global_init")
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -163,7 +171,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     
-    if (verboseOn) {printf("URL: %s\n", c_URL);}
+    DBG_PRINT(c_URL);
 
     // Initialize CURL connection
     if(!init(conn, c_URL)) {
@@ -184,7 +192,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(customTitle.c_str(), "")==0) {
         // Parse the (assumed) HTML code
         parseHtml(buffer, title);
-        if (verboseOn) {printf("title: %s\n", title.c_str());}
+        DBG_PRINT(title.c_str());
     }
     else {
         string title0;
@@ -210,11 +218,12 @@ int main(int argc, char *argv[]) {
     const char *title_cstr = title.c_str();
     string title_new_str = "";
     
-    if (timeOn) {
-        printf("- **%s** *%s* ", dateStr.c_str(), timeStr.c_str());
-    }
-    else {
+    if (listItemOn) {
         printf("- ");
+    }
+
+    if (timeOn) {
+        printf("**%s** *%s* ", dateStr.c_str(), timeStr.c_str());
     }
     
     for (int i = 0; i < title.length(); i++) {

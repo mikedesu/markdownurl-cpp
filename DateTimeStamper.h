@@ -2,6 +2,8 @@
 
 #include <string>
 
+using namespace std;
+
 class DateTimeStamper {
 
     public:
@@ -9,10 +11,12 @@ class DateTimeStamper {
 
         time_t now();
         
-        std::string getDateTimeString(time_t *t);
-        std::string getNowString();
-        std::string getInitializedAtString();
-        std::string getMilitaryTimeString();
+        string getDateTimeString(time_t *t);
+        string getNowString();
+        string getInitializedAtString();
+        string getMilitaryTimeString();
+
+        string getDateString();
 
     private:
         time_t initialized_at;

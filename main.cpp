@@ -7,7 +7,10 @@
 #include <string>
 #include <algorithm>
 
+#include <getopt.h>
+
 #include "DateTimeStamper.h"
+#include "MarkdownURL.h"
 
 //  Case-insensitive string comparison
 #ifdef _MSC_VER
@@ -16,22 +19,26 @@
 #define COMPARE(a, b) (!strcasecmp((a), (b)))
 #endif
 
+using namespace std;
+
 bool invalidChar(char c) ;
-void stripUnicode(std::string &str) ;
+void stripUnicode(string &str) ;
 
 //  libxml callback context structure
 struct Context {
     Context(): addTitle(false) { }
     bool addTitle;
-    std::string title;
+    string title;
 };
+
+void printUsage(char *cmdString) ;
 
 //  libcurl variables for error strings and returned data
 static char errorBuffer[CURL_ERROR_SIZE];
-static std::string buffer;
+static string buffer;
 
 //  libcurl write callback function
-static int writer(char *data, size_t size, size_t nmemb, std::string *writerData) ;
+static int writer(char *data, size_t size, size_t nmemb, string *writerData) ;
 
 //  libcurl connection initialization
 static bool init(CURL *&conn, char *url) ;
@@ -83,38 +90,83 @@ static htmlSAXHandler saxHandler = {
 };
 
 //  Parse given (assumed to be) HTML text and return the title
-static void parseHtml(const std::string &html, std::string &title);
+static void parseHtml(const string &html, string &title);
 
 // Parse title given on command line and handle special characters
 // Currently using ^1 to mean "main page title"
-std::string handleTitle(std::string cmdLineTitle, std::string title) {
+string handleTitle(string cmdLineTitle, string title) {
     size_t beginPos = title.find( "^1" );
-    if ( beginPos != std::string::npos ) {
+    if ( beginPos != string::npos ) {
         size_t endPos = beginPos + 3;
         title.replace( beginPos, endPos, cmdLineTitle );
     }
     return title;
 }
 
-
 int main(int argc, char *argv[]) {
-
     CURL *conn = NULL;
     CURLcode code;
-    std::string title;
-    std::string url;
+    string title;
+    string url;
+    string inputURL = "";
+    string customTitle = "";
     DateTimeStamper d;
 
-    if (argc < 2 || argc > 3) {
-        fprintf(stderr, "Usage: %s <url>\n", argv[0]);
-        fprintf(stderr, "Usage: %s <url> <title>\n", argv[0]);
-        exit(EXIT_FAILURE);
+    int c;
+    bool timeOn = false;
+    bool printHelp = false;
+    bool verboseOn = false;
+
+    while ((c = getopt(argc, argv, "thi:c:")) != -1) {
+        switch (c) {
+            case -1:
+            case 0:
+            break;
+
+            case 't':
+            timeOn = true;
+            break;
+
+            case 'h':
+            printHelp = true;
+            break;
+
+            case 'i':
+            inputURL = string(optarg);
+            break;
+
+            case 'c':
+            customTitle = string(optarg);
+            break;
+
+            case 'v':
+            verboseOn = true;
+            break;
+        }
     }
+    
+    if (printHelp) {
+        printUsage(argv[0]);
+        exit(EXIT_SUCCESS);
+    }
+
+    if (verboseOn) {printf("curl_global_init\n");}
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
+    char c_URL[512] = {0};
+    strcpy(c_URL, inputURL.c_str());
+
+    if (strcmp(c_URL, "")==0) {
+        fprintf(stderr, "No URL specified!\n\n");
+        printUsage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    
+    if (verboseOn) {printf("URL: %s\n", c_URL);}
+
     // Initialize CURL connection
-    if(!init(conn, argv[1])) {
+    if(!init(conn, c_URL)) {
         fprintf(stderr, "Connection initializion failed\n");
         exit(EXIT_FAILURE);
     }
@@ -124,38 +176,47 @@ int main(int argc, char *argv[]) {
     curl_easy_cleanup(conn);
 
     if(code != CURLE_OK) {
-        fprintf(stderr, "Failed to get '%s' [%s]\n", argv[1], errorBuffer);
+        fprintf(stderr, "Failed to get '%s' [%s]\n", inputURL.c_str(), errorBuffer);
         exit(EXIT_FAILURE);
     }
     
-    url = std::string(argv[1]);
-    
-    if (argc == 2) {
+    url = inputURL;
+    if (strcmp(customTitle.c_str(), "")==0) {
         // Parse the (assumed) HTML code
         parseHtml(buffer, title);
+        if (verboseOn) {printf("title: %s\n", title.c_str());}
     }
     else {
-        std::string title0;
+        string title0;
         parseHtml(buffer, title0);
 
-        title = handleTitle(title0, std::string(argv[2]));
+        title = handleTitle(title0, string(customTitle));
+        if (verboseOn) {printf("title: %s\n", title.c_str());}
     }
 
     // Strip the unicode from the title
     stripUnicode( title );
 
-    // Get the time
-    std::string timeStr = d.getMilitaryTimeString();
+    // Get the date and time
+    string dateStr = d.getDateString();
+    string timeStr = d.getMilitaryTimeString();
 
     // Display the extracted title
-    //This line works for most sites but I found a site that was breaking this code...
-    //http://moonbit.co.in
-    //printf("- *%s* [%s](%s)\n", timeStr.c_str(), title.c_str(), url.c_str() );
-    //To work around this, I print the title character-by-character and omit printing
-    //Of newlines, linefeeds, and tabs
+    // This line works for most sites but I found a site that was breaking this code...
+    // http://moonbit.co.in
+    // printf("- *%s* [%s](%s)\n", timeStr.c_str(), title.c_str(), url.c_str() );
+    // To work around this, I print the title character-by-character and omit printing
+    // Of newlines, linefeeds, and tabs
     const char *title_cstr = title.c_str();
-    std::string title_new_str = "";
-    printf("- *%s* [", timeStr.c_str());
+    string title_new_str = "";
+    
+    if (timeOn) {
+        printf("- **%s** *%s* ", dateStr.c_str(), timeStr.c_str());
+    }
+    else {
+        printf("- ");
+    }
+    
     for (int i = 0; i < title.length(); i++) {
         char c = title_cstr[i];
         if (c != '\n' && c != '\t' && c != 13) {
@@ -175,7 +236,12 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    printf("%s](%s)\n", title_new_str.c_str(), url.c_str());
+    
+    // Create a new object representing the Title and URL
+    MarkdownURL mURL = MarkdownURL(title_new_str, url);
+
+    printf("[%s](%s)\n", mURL.getTitle().c_str(), mURL.getURL().c_str());
+
     return EXIT_SUCCESS;
 }
 
@@ -184,20 +250,20 @@ bool invalidChar(char c) {
     return ! ( d >= 0 && d < 128 );
 }
 
-void stripUnicode(std::string &str) {
+void stripUnicode(string &str) {
     str.erase( std::remove_if( str.begin(), str.end(), invalidChar ), str.end() );
 }
 
-static int writer(char *data, size_t size, size_t nmemb, std::string *writerData) {
-    if(writerData == NULL)
+static int writer(char *data, size_t size, size_t nmemb, string *writerData) {
+    if(writerData == NULL) {
         return 0;
+    }
     writerData->append(data, size*nmemb);
     return size * nmemb;
 }
 
 static bool init(CURL *&conn, char *url) {
     CURLcode code;
-
     conn = curl_easy_init();
 
     if(conn == NULL) {
@@ -249,13 +315,15 @@ static void StartElement(void *voidContext, const xmlChar *name, const xmlChar *
 
 static void EndElement(void *voidContext, const xmlChar *name) {
     Context *context = (Context *)voidContext;
-    if(COMPARE((char *)name, "TITLE"))
+    if(COMPARE((char *)name, "TITLE")) {
         context->addTitle = false;
+    }
 }
 
 static void handleCharacters(Context *context, const xmlChar *chars, int length) {
-    if(context->addTitle)
+    if(context->addTitle) {
         context->title.append((char *)chars, length);
+    }
 }
 
 static void Characters(void *voidContext, const xmlChar *chars, int length) {
@@ -268,7 +336,7 @@ static void cdata(void *voidContext, const xmlChar *chars, int length) {
     handleCharacters(context, chars, length);
 }
 
-static void parseHtml(const std::string &html, std::string &title) {
+static void parseHtml(const string &html, string &title) {
     htmlParserCtxtPtr ctxt;
     Context context;
     ctxt = htmlCreatePushParserCtxt(&saxHandler, &context, "", 0, "", XML_CHAR_ENCODING_NONE);
@@ -276,5 +344,14 @@ static void parseHtml(const std::string &html, std::string &title) {
     htmlParseChunk(ctxt, "", 0, 1);
     htmlFreeParserCtxt(ctxt);
     title = context.title;
+}
+
+void printUsage(char *cmdString) {
+    printf("Usage:\n\n");
+    printf("%s [-h] [-t] <i - inputURL> [c - customTitle]\n", cmdString);
+    printf("-h: Prints help\n");
+    printf("-i <inputURL>: specifies the URL to grab the title of\n");
+    printf("-c <customTitle>: specifies the custom Title to use in the output\n");
+    printf("\n");
 }
 

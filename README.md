@@ -14,24 +14,26 @@ timestamps attached.
 
 `$ make`
 
+### Flags
+
+- h: help
+- t: datetimeOn
+- l: listItemOn
+- i <inputURL>: inputURL
+- c <customTitle>: customTitle
+
 ### Running
 
-`$ ./main <url>`
-
-`$ ./main <url> <title>`
+```
+./main -h
+./main -i mbell.tech
+./main -l -t -i mbell.tech -c "customTitle"
+./main -l -t -i mbell.tech -c "customTitle | ^1"
+```
 
 ### Example
 
 ```
-$ ./main https://github.com/mikedesu/markdownurl-cpp
-- *16:46* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++](https://github.com/mikedesu/markdownurl-cpp)
-$ ./main https://github.com/mikedesu/markdownurl-cpp "custom title"
-- *16:46* [custom title](https://github.com/mikedesu/markdownurl-cpp)
-$ ./main https://github.com/mikedesu/markdownurl-cpp "^1 | custom title"
-- *13:20* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++| custom title](https://github.com/mikedesu/markdownurl-cpp)
+./main -l -t -i mbell.tech -c "customTitle | ^1"
+- **12/18/2017** *23:03* [customTitle | mbell.tech | index](mbell.tech)
 ```
-
-- *16:46* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++](https://github.com/mikedesu/markdownurl-cpp)
-- *16:46* [custom title](https://github.com/mikedesu/markdownurl-cpp)
-- *13:20* [GitHub - mikedesu/markdownurl-cpp: An advanced version of markdownurl written in C++| custom title](https://github.com/mikedesu/markdownurl-cpp)
-

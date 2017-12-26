@@ -116,15 +116,20 @@ int main(int argc, char *argv[]) {
     DateTimeStamper d;
 
     int c;
+    bool dateOn = false;
     bool timeOn = false;
     bool printHelp = false;
     bool verboseOn = false;
     bool listItemOn = false;
 
-    while ((c = getopt(argc, argv, "thvli:c:")) != -1) {
+    while ((c = getopt(argc, argv, "dthvli:c:")) != -1) {
         switch (c) {
             case -1:
             case 0:
+            break;
+
+            case 'd':
+            dateOn = true;
             break;
 
             case 't':
@@ -222,8 +227,13 @@ int main(int argc, char *argv[]) {
         printf("- ");
     }
 
+    if (dateOn) {
+        printf("**%s** ", dateStr.c_str() );
+
+    }
+
     if (timeOn) {
-        printf("**%s** *%s* ", dateStr.c_str(), timeStr.c_str());
+        printf("*%s* ", timeStr.c_str());
     }
     
     for (int i = 0; i < title.length(); i++) {
@@ -355,12 +365,25 @@ static void parseHtml(const string &html, string &title) {
     title = context.title;
 }
 
+/*
 void printUsage(char *cmdString) {
     printf("Usage:\n\n");
-    printf("%s [-h] [-t] <i - inputURL> [c - customTitle]\n", cmdString);
+    printf("%s [-h] [-d] [-t] <-i inputURL> [-c customTitle]\n", cmdString);
     printf("-h: Prints help\n");
+    printf("-t: Prints time\n");
     printf("-i <inputURL>: specifies the URL to grab the title of\n");
     printf("-c <customTitle>: specifies the custom Title to use in the output\n");
     printf("\n");
 }
+*/
 
+void printUsage(char *cmdString) {
+    printf("Usage:\n\n" \
+        "%s [-h] [-d] [-t] <-i inputURL> [-c customTitle]\n" \
+        "-h: Prints help\n" \
+        "-t: Prints time\n" \
+        "-d: Prints date\n" \
+        "-i <inputURL>: specifies the URL to grab the title of\n" \
+        "-c <customTitle>: specifies the custom Title to use in the output\n\n",
+        cmdString);
+}
